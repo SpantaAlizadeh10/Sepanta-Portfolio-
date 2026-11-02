@@ -720,7 +720,7 @@
   }
 }
 
-@media (hover: none), (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
   .marqueeViewport {
     overflow-x: auto;
     scrollbar-width: none;
