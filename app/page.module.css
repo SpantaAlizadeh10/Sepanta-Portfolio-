@@ -304,8 +304,8 @@
 
 .work {
   display: block;
-  width: clamp(130px, 16vw, 220px);
-  padding: 0 var(--pad);
+  width: 100%;
+  padding: clamp(72px, 10vh, 112px) var(--pad) 0;
   margin-bottom: 38px;
 }
 
@@ -662,7 +662,7 @@
   }
 
   .work {
-    padding: 64px 0 76px;
+    padding: 80px 0 76px;
   }
 
   .sectionHeading {
