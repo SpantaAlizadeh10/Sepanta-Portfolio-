@@ -76,8 +76,7 @@
   backdrop-filter: none;
 }
 .menuOpen .wordmark {
-  border-color: var(--bg);
-  color: var(--bg);
+  opacity: 0.96;
 }
 
 .mobileMenu {
@@ -304,16 +303,8 @@
 }
 
 .work {
-  padding: 82px 0 112px;
-  border-top: 1px solid var(--line);
-}
-
-.sectionHeading {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
+  display: block;
+  width: clamp(130px, 16vw, 220px);
   padding: 0 var(--pad);
   margin-bottom: 38px;
 }
@@ -358,20 +349,29 @@
   position: relative;
   overflow: hidden;
   aspect-ratio: 4 / 3;
+  isolation: isolate;
   border: 1px solid rgba(21, 26, 31, 0.07);
   border-radius: 16px;
   background: #eae7e0;
   box-shadow: 0 18px 36px rgba(21, 26, 31, 0.08);
+  transition:
+    transform 600ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    box-shadow 600ms ease;
 }
 
 .projectImage img {
   padding: 8px;
   object-fit: contain;
-  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 800ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
 .projectCard:hover .projectImage img {
-  transform: scale(1.035);
+  transform: scale(1.07) rotate(-1deg);
+}
+
+.projectCard:hover .projectImage {
+  transform: translateY(-7px);
+  box-shadow: 0 28px 54px rgba(21, 26, 31, 0.16);
 }
 
 .projectArrow {
@@ -756,21 +756,19 @@
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.headerHidden {
-  transform: translateY(-110%);
+.wordmark {
+  display: block;
+  width: clamp(130px, 16vw, 220px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  line-height: 0;
 }
 
-.wordmark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid var(--blue);
-  border-radius: 50%;
-  color: var(--blue);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0;
+.wordmark img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .navigation {
@@ -894,6 +892,12 @@
   animation: fadeIn 900ms 1.45s forwards;
 }
 
+.heroCopy > .heroLink {
+  margin-top: 24px;
+  opacity: 0;
+  animation: fadeIn 900ms 1.7s forwards;
+}
+
 .heroActions {
   position: absolute;
   right: var(--pad);
@@ -929,7 +933,7 @@
 
 .heroArtwork {
   top: 14%;
-  right: -6vw;
+  right: 4vw;
   width: min(46vw, 620px);
   transform: translateY(var(--hero-scroll, 0)) scale(1);
   opacity: 1;
@@ -1220,6 +1224,13 @@
 .bridgeTile img {
   object-fit: cover;
   opacity: 0.75;
+  transition:
+    transform 800ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    opacity 500ms ease;
+}
+.bridgeTile:hover img {
+  opacity: 1;
+  transform: scale(1.08);
 }
 .bridgeTile span {
   position: relative;
@@ -1305,15 +1316,22 @@
   overflow: hidden;
   border-radius: 12px;
   filter: drop-shadow(0 30px 36px rgba(30, 30, 20, 0.14));
-  opacity: 0.08;
+  opacity: 0;
+  transition:
+    opacity 800ms ease,
+    filter 700ms ease;
   will-change: transform, opacity;
 }
 .projectVisual img {
   padding: 10px;
   object-fit: contain;
+  transition: transform 900ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 .projectVisual.inView {
   opacity: 1;
+}
+.caseProject:hover .projectVisual img {
+  transform: scale(1.035);
 }
 .caseCopy {
   max-width: 390px;
@@ -1475,6 +1493,7 @@
     Georgia,
     serif;
   text-align: center;
+  transition: opacity 180ms ease;
 }
 .sketchTools {
   display: flex;
@@ -1491,6 +1510,25 @@
   background: transparent;
   color: var(--ink);
   cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+.sketchTools button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+}
+.sketchTools button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.sketchTools .activeTool {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: white;
 }
 .sketchTools button[data-pen-color] {
   width: 34px;
@@ -1517,6 +1555,49 @@
 .sketchTools input {
   width: 110px;
   accent-color: var(--blue);
+}
+.customColor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.customColor input {
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.penSizeValue {
+  min-width: 32px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.sketchTools .whatsappButton {
+  padding: 0 17px;
+  border-color: #168b52;
+  background: #168b52;
+  color: #fff;
+  font-weight: 600;
+}
+.sketchTools .whatsappButton:hover {
+  border-color: #08733e;
+  background: #08733e;
+}
+.sketchStatus {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .brief {
@@ -1763,6 +1844,9 @@
   .headerCta {
     display: none;
   }
+  .wordmark {
+    width: min(160px, 42vw);
+  }
   .menuToggle {
     display: inline-flex;
     min-width: 84px;
@@ -1812,6 +1896,11 @@
   .heroActions {
     position: static;
     margin-top: 28px;
+  }
+  .heroCopy > .heroLink {
+    position: relative;
+    z-index: 3;
+    margin-top: 22px;
   }
   .caseProject,
   .caseFlip {
@@ -1954,6 +2043,25 @@
 
 .ahrimanCover:hover img {
   transform: scale(1.025);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projectImage,
+  .projectImage img,
+  .bridgeTile img,
+  .projectVisual,
+  .projectVisual img,
+  .ahrimanCover img {
+    transition: none !important;
+  }
+
+  .projectCard:hover .projectImage,
+  .projectCard:hover .projectImage img,
+  .bridgeTile:hover img,
+  .caseProject:hover .projectVisual img,
+  .ahrimanCover:hover img {
+    transform: none !important;
+  }
 }
 
 .ahrimanCover figcaption {

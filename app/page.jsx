@@ -22,12 +22,13 @@ const projects = [
       "A warm restaurant experience pairing expressive food photography with a simple online journey.",
   },
   {
-    title: "Sepi Food app",
-    category: "03 / Mobile UI",
-    image: "/Images/Screenshot%201405-05-09%20at%2011.06.58.png",
-    alt: "Sepi Food mobile app design",
+    title: "Fine Dining App",
+    category: "03 / Food & hospitality app",
+    image:
+      "/Images/Fine%20Dining%20App%20Mockup%20with%20Fresh%20Ingredients.png",
+    alt: "Fine-dining app displayed on a phone, with a gold interface, featured grilled steak, ingredient details, and food photography",
     description:
-      "A compact ordering experience shaped around quick decisions and a clear visual hierarchy.",
+      "A mobile dining concept with an elegant gold interface, featured dishes, ingredient details, ratings, and a clear order flow.",
   },
   {
     title: "Aryana",
@@ -200,91 +201,379 @@ function ProjectMarquee() {
 
 function SketchBoard() {
   const canvasRef = useRef(null);
+  const drawingRef = useRef(false);
+  const lastPointRef = useRef(null);
+  const ratioRef = useRef(1);
+  const strokesRef = useRef([]);
+  const redoRef = useRef([]);
+  const activeStrokeRef = useRef(null);
+  const [penColor, setPenColor] = useState("#2b5fe0");
+  const [penSize, setPenSize] = useState(4);
+  const [tool, setTool] = useState("pen");
+  const [hasDrawing, setHasDrawing] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
 
-  useEffect(() => {
+  const redraw = () => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-    let drawing = false;
-    let color = "#2b5fe0";
-    let width = 4;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0);
+
+    for (const stroke of strokesRef.current) {
+      if (stroke.type === "clear") {
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.setTransform(ratioRef.current, 0, 0, ratioRef.current, 0, 0);
+        continue;
+      }
+      if (!stroke.points.length) continue;
+      const points = stroke.points.map((point) => ({
+        x: point.x * width,
+        y: point.y * height,
+      }));
+      context.save();
+      context.globalCompositeOperation =
+        stroke.type === "eraser" ? "destination-out" : "source-over";
+      context.strokeStyle = stroke.color;
+      context.fillStyle = stroke.color;
+      context.lineWidth = stroke.size * (width / stroke.referenceWidth);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      if (points.length === 1) {
+        context.beginPath();
+        context.arc(
+          points[0].x,
+          points[0].y,
+          context.lineWidth / 2,
+          0,
+          Math.PI * 2,
+        );
+        context.fill();
+      } else {
+        context.beginPath();
+        context.moveTo(points[0].x, points[0].y);
+        points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+        context.stroke();
+      }
+      context.restore();
+    }
+    if (activeStrokeRef.current) {
+      const activeStroke = activeStrokeRef.current;
+      const points = activeStroke.points.map((point) => ({
+        x: point.x * width,
+        y: point.y * height,
+      }));
+      if (points.length) {
+        context.save();
+        context.globalCompositeOperation =
+          activeStroke.type === "eraser" ? "destination-out" : "source-over";
+        context.strokeStyle = activeStroke.color;
+        context.fillStyle = activeStroke.color;
+        context.lineWidth =
+          activeStroke.size * (width / activeStroke.referenceWidth);
+        context.lineCap = "round";
+        context.lineJoin = "round";
+        if (points.length === 1) {
+          context.beginPath();
+          context.arc(
+            points[0].x,
+            points[0].y,
+            context.lineWidth / 2,
+            0,
+            Math.PI * 2,
+          );
+          context.fill();
+        } else {
+          context.beginPath();
+          context.moveTo(points[0].x, points[0].y);
+          points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+          context.stroke();
+        }
+        context.restore();
+      }
+    }
+  };
+
+  const syncHistory = () => {
+    setCanUndo(strokesRef.current.length > 0);
+    setCanRedo(redoRef.current.length > 0);
+    let lastClear = -1;
+    strokesRef.current.forEach((stroke, index) => {
+      if (stroke.type === "clear") lastClear = index;
+    });
+    setHasDrawing(
+      strokesRef.current
+        .slice(lastClear + 1)
+        .some((stroke) => stroke.type !== "clear"),
+    );
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const resize = () => {
       const bounds = canvas.getBoundingClientRect();
       const ratio = window.devicePixelRatio || 1;
-      canvas.width = bounds.width * ratio;
-      canvas.height = bounds.height * ratio;
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    };
-    const point = (event) => {
-      const bounds = canvas.getBoundingClientRect();
-      return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
-    };
-    const start = (event) => {
-      drawing = true;
-      canvas.setPointerCapture(event.pointerId);
-      const p = point(event);
-      context.beginPath();
-      context.moveTo(p.x, p.y);
-      context.strokeStyle = color;
-      context.lineWidth = width;
-      context.lineCap = "round";
-    };
-    const move = (event) => {
-      if (!drawing) return;
-      const p = point(event);
-      context.lineTo(p.x, p.y);
-      context.stroke();
-    };
-    const stop = () => {
-      drawing = false;
-    };
-    const colors = canvas.parentElement.querySelectorAll("[data-pen-color]");
-    const size = canvas.parentElement.querySelector("input[type=range]");
-    const clear = canvas.parentElement.querySelector("[data-clear-sketch]");
-    const chooseColor = (event) => {
-      color = event.currentTarget.dataset.penColor;
-      colors.forEach((button) =>
-        button.classList.toggle(
-          styles.selectedPen,
-          button === event.currentTarget,
-        ),
-      );
+      canvas.width = Math.round(bounds.width * ratio);
+      canvas.height = Math.round(bounds.height * ratio);
+      ratioRef.current = ratio;
+      redraw();
     };
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(canvas);
-    canvas.addEventListener("pointerdown", start);
-    canvas.addEventListener("pointermove", move);
-    canvas.addEventListener("pointerup", stop);
-    canvas.addEventListener("pointercancel", stop);
-    colors.forEach((button) => button.addEventListener("click", chooseColor));
-    const changeSize = (event) => {
-      width = Number(event.currentTarget.value);
-    };
-    const clearBoard = () =>
-      context.clearRect(0, 0, canvas.width, canvas.height);
-    size?.addEventListener("input", changeSize);
-    clear?.addEventListener("click", clearBoard);
     resize();
-    return () => {
-      resizeObserver.disconnect();
-      canvas.removeEventListener("pointerdown", start);
-      canvas.removeEventListener("pointermove", move);
-      canvas.removeEventListener("pointerup", stop);
-      canvas.removeEventListener("pointercancel", stop);
-      colors.forEach((button) =>
-        button.removeEventListener("click", chooseColor),
-      );
-      size?.removeEventListener("input", changeSize);
-      clear?.removeEventListener("click", clearBoard);
-    };
+    return () => resizeObserver.disconnect();
   }, []);
 
+  const getPoint = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    return {
+      x: (event.clientX - bounds.left) / bounds.width,
+      y: (event.clientY - bounds.top) / bounds.height,
+    };
+  };
+
+  const startDrawing = (event) => {
+    event.preventDefault();
+    const canvas = event.currentTarget;
+    if (!canvas.getContext("2d")) return;
+    canvas.setPointerCapture(event.pointerId);
+    drawingRef.current = true;
+    const point = getPoint(event);
+    lastPointRef.current = point;
+    activeStrokeRef.current = {
+      type: tool,
+      color: penColor,
+      size: penSize,
+      referenceWidth: canvas.clientWidth,
+      points: [point],
+    };
+    redoRef.current = [];
+    setHasDrawing(true);
+    redraw();
+  };
+
+  const continueDrawing = (event) => {
+    if (!drawingRef.current) return;
+    const stroke = activeStrokeRef.current;
+    if (!stroke) return;
+    const point = getPoint(event);
+    const canvas = event.currentTarget;
+    const context = canvas.getContext("2d");
+    const previous = lastPointRef.current;
+    if (!context || !previous) return;
+    context.save();
+    context.globalCompositeOperation =
+      stroke.type === "eraser" ? "destination-out" : "source-over";
+    context.beginPath();
+    context.moveTo(
+      previous.x * canvas.clientWidth,
+      previous.y * canvas.clientHeight,
+    );
+    context.lineTo(point.x * canvas.clientWidth, point.y * canvas.clientHeight);
+    context.strokeStyle = stroke.color;
+    context.lineWidth = stroke.size;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.stroke();
+    context.restore();
+    stroke.points.push(point);
+    lastPointRef.current = point;
+  };
+
+  const stopDrawing = () => {
+    if (activeStrokeRef.current?.points.length) {
+      strokesRef.current.push(activeStrokeRef.current);
+      syncHistory();
+    }
+    activeStrokeRef.current = null;
+    drawingRef.current = false;
+    lastPointRef.current = null;
+  };
+
+  const undo = () => {
+    const stroke = strokesRef.current.pop();
+    if (!stroke) return;
+    redoRef.current.push(stroke);
+    redraw();
+    syncHistory();
+  };
+
+  const redo = () => {
+    const stroke = redoRef.current.pop();
+    if (!stroke) return;
+    strokesRef.current.push(stroke);
+    redraw();
+    syncHistory();
+  };
+
+  const clearBoard = () => {
+    if (!strokesRef.current.length) return;
+    strokesRef.current.push({ type: "clear", points: [] });
+    redoRef.current = [];
+    redraw();
+    syncHistory();
+  };
+
+  const downloadBlob = (blob) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "sepanta-design-sketch.png";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const exportImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const output = document.createElement("canvas");
+    output.width = canvas.width;
+    output.height = canvas.height;
+    const context = output.getContext("2d");
+    if (!context) return null;
+    context.fillStyle = "#f6f2eb";
+    context.fillRect(0, 0, output.width, output.height);
+    context.drawImage(canvas, 0, 0);
+    return new Promise((resolve) => output.toBlob(resolve, "image/png"));
+  };
+
+  const saveImage = async () => {
+    const blob = await exportImage();
+    if (!blob) return;
+    downloadBlob(blob);
+    setShareStatus("PNG saved to your downloads.");
+  };
+
+  const shareOnWhatsApp = async () => {
+    const shareText = "Here is my design sketch.";
+    const whatsappWindow = window.open(
+      `https://wa.me/989130772988?text=${encodeURIComponent(shareText)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    const blob = await exportImage();
+    if (!blob) {
+      whatsappWindow?.close();
+      return;
+    }
+    downloadBlob(blob);
+    setShareStatus(
+      "PNG downloaded. Attach it in the WhatsApp chat with +98 913 077 2988.",
+    );
+  };
+
   return (
-    <canvas
-      ref={canvasRef}
-      className={styles.sketchCanvas}
-      aria-label="Sketch board. Draw with a mouse, finger, or pen."
-    />
+    <>
+      <div className={styles.sketchBoard}>
+        <canvas
+          ref={canvasRef}
+          className={styles.sketchCanvas}
+          aria-label="Sketch board. Draw with a mouse, finger, or pen."
+          onPointerDown={startDrawing}
+          onPointerMove={continueDrawing}
+          onPointerUp={stopDrawing}
+          onPointerCancel={stopDrawing}
+          onLostPointerCapture={stopDrawing}
+        />
+        <span
+          className={styles.sketchHint}
+          style={{ opacity: hasDrawing ? 0 : 1 }}
+          aria-hidden="true"
+        >
+          Draw anything — a layout, a logo, a rough idea
+        </span>
+      </div>
+      <div className={styles.sketchTools}>
+        {[
+          ["#2b5fe0", "Blue pen"],
+          ["#151a1f", "Black pen"],
+          ["#10a7c4", "Teal pen"],
+        ].map(([color, label]) => (
+          <button
+            key={color}
+            type="button"
+            data-pen-color={color}
+            className={penColor === color ? styles.selectedPen : ""}
+            aria-label={label}
+            aria-pressed={penColor === color}
+            onClick={() => setPenColor(color)}
+          />
+        ))}
+        <label className={styles.customColor} title="Custom pen color">
+          <span>Custom</span>
+          <input
+            type="color"
+            value={penColor}
+            aria-label="Custom pen color"
+            onChange={(event) => {
+              setPenColor(event.target.value);
+              setTool("pen");
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          className={tool === "eraser" ? styles.activeTool : ""}
+          aria-pressed={tool === "eraser"}
+          onClick={() =>
+            setTool((current) => (current === "eraser" ? "pen" : "eraser"))
+          }
+        >
+          Eraser
+        </button>
+        <input
+          type="range"
+          min="2"
+          max="16"
+          value={penSize}
+          aria-label="Pen size"
+          onChange={(event) => setPenSize(Number(event.target.value))}
+        />
+        <output className={styles.penSizeValue}>{penSize}px</output>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={!canUndo}
+          aria-label="Undo last stroke"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          onClick={redo}
+          disabled={!canRedo}
+          aria-label="Redo stroke"
+        >
+          Redo
+        </button>
+        <button type="button" onClick={clearBoard} disabled={!hasDrawing}>
+          Clear
+        </button>
+        <button type="button" onClick={saveImage} disabled={!hasDrawing}>
+          Save PNG
+        </button>
+        <button
+          type="button"
+          className={styles.whatsappButton}
+          onClick={shareOnWhatsApp}
+          disabled={!hasDrawing}
+        >
+          Send on WhatsApp ↗
+        </button>
+      </div>
+      {shareStatus && (
+        <p className={styles.sketchStatus} role="status" aria-live="polite">
+          {shareStatus}
+        </p>
+      )}
+    </>
   );
 }
 
@@ -332,7 +621,6 @@ export default function Page() {
     const secondLine = root.querySelector(`.${styles.secondLine}`);
     const blob = root.querySelector(`.${styles.heroArtwork}`);
     const badge = root.querySelector(`.${styles.rotatingBadge}`);
-    const header = root.querySelector(`.${styles.header}`);
     const progress = root.querySelector(`.${styles.progress}`);
     const nav = root.querySelector(`.${styles.navigation}`);
     const indicator = root.querySelector(`.${styles.navIndicator}`);
@@ -344,7 +632,6 @@ export default function Page() {
     const trailBase = root.querySelector(`.${styles.trailBase}`);
     const trailProgress = root.querySelector(`.${styles.trailProgress}`);
     const trailMarker = root.querySelector(`.${styles.trailMarker}`);
-    let previousY = window.scrollY;
     let activeNav = null;
     let frame = 0;
     let shapeIndex = 0;
@@ -409,9 +696,6 @@ export default function Page() {
         document.documentElement.scrollHeight - viewport,
       );
       progress?.style.setProperty("--page-progress", String(y / maxScroll));
-      if (y > previousY && y > 140) header?.classList.add(styles.headerHidden);
-      else header?.classList.remove(styles.headerHidden);
-      previousY = y;
       let currentNav = null;
       navLinks.forEach((link) => {
         const section = root.querySelector(link.getAttribute("href"));
@@ -574,7 +858,13 @@ export default function Page() {
       <div className={styles.progress} aria-hidden="true" />
       <header className={styles.header}>
         <a className={styles.wordmark} href="#top" aria-label="Home">
-          SA
+          <Image
+            src="/brand/sepanta-logo.png"
+            alt="Sepanta Ali Alizadeh — UI/UX Designer"
+            width={220}
+            height={61}
+            priority
+          />
         </a>
         <nav className={styles.navigation} aria-label="Main navigation">
           <i className={styles.navIndicator} />
@@ -679,34 +969,34 @@ export default function Page() {
             clear, characterful digital experiences and identities that connect
             with people.
           </p>
-          <div className={styles.heroActions}>
-            <span className={styles.badgeWrap}>
-              <svg className={styles.rotatingBadge} viewBox="0 0 120 120">
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="58"
-                  fill="none"
-                  stroke="currentColor"
+          <a className={styles.heroLink} href="#work">
+            Explore selected work <span aria-hidden="true">↓</span>
+          </a>
+        </div>
+        <div className={styles.heroActions}>
+          <span className={styles.badgeWrap}>
+            <svg className={styles.rotatingBadge} viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r="58"
+                fill="none"
+                stroke="currentColor"
+              />
+              <defs>
+                <path
+                  id="badgeCircle"
+                  d="M60 60m-40 0a40 40 0 1 1 80 0a40 40 0 1 1-80 0"
                 />
-                <defs>
-                  <path
-                    id="badgeCircle"
-                    d="M60 60m-40 0a40 40 0 1 1 80 0a40 40 0 1 1-80 0"
-                  />
-                </defs>
-                <text fontSize="11" letterSpacing="3" fill="currentColor">
-                  <textPath href="#badgeCircle">
-                    UI/UX · VISUAL DESIGN · UI/UX · VISUAL DESIGN ·
-                  </textPath>
-                </text>
-              </svg>
-              <span aria-hidden="true">↓</span>
-            </span>
-            <a className={styles.heroLink} href="#work">
-              Explore selected work ↓
-            </a>
-          </div>
+              </defs>
+              <text fontSize="11" letterSpacing="3" fill="currentColor">
+                <textPath href="#badgeCircle">
+                  UI/UX · VISUAL DESIGN · UI/UX · VISUAL DESIGN ·
+                </textPath>
+              </text>
+            </svg>
+            <span aria-hidden="true">↓</span>
+          </span>
         </div>
       </section>
 
@@ -947,40 +1237,7 @@ export default function Page() {
       <section className={styles.sketch} id="sketch">
         <p className={styles.eyebrow}>Sketch your idea</p>
         <h2 className={styles.scrollReveal}>Draw it. I’ll design it.</h2>
-        <div className={styles.sketchBoard}>
-          <SketchBoard />
-          <span className={styles.sketchHint}>
-            Draw anything — a layout, a logo, a rough idea
-          </span>
-        </div>
-        <div className={styles.sketchTools}>
-          <button
-            type="button"
-            data-pen-color="#2b5fe0"
-            className={styles.selectedPen}
-            aria-label="Blue pen"
-          />
-          <button
-            type="button"
-            data-pen-color="#151a1f"
-            aria-label="Black pen"
-          />
-          <button
-            type="button"
-            data-pen-color="#10a7c4"
-            aria-label="Teal pen"
-          />
-          <input
-            type="range"
-            min="2"
-            max="16"
-            defaultValue="4"
-            aria-label="Pen size"
-          />
-          <button type="button" data-clear-sketch>
-            Clear
-          </button>
-        </div>
+        <SketchBoard />
       </section>
 
       <section className={styles.brief} id="pick">
