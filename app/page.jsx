@@ -972,31 +972,31 @@ export default function Page() {
           <a className={styles.heroLink} href="#work">
             Explore selected work <span aria-hidden="true">↓</span>
           </a>
-        </div>
-        <div className={styles.heroActions}>
-          <span className={styles.badgeWrap}>
-            <svg className={styles.rotatingBadge} viewBox="0 0 120 120">
-              <circle
-                cx="60"
-                cy="60"
-                r="58"
-                fill="none"
-                stroke="currentColor"
-              />
-              <defs>
-                <path
-                  id="badgeCircle"
-                  d="M60 60m-40 0a40 40 0 1 1 80 0a40 40 0 1 1-80 0"
+          <div className={styles.heroActions}>
+            <span className={styles.badgeWrap}>
+              <svg className={styles.rotatingBadge} viewBox="0 0 120 120">
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="58"
+                  fill="none"
+                  stroke="currentColor"
                 />
-              </defs>
-              <text fontSize="11" letterSpacing="3" fill="currentColor">
-                <textPath href="#badgeCircle">
-                  UI/UX · VISUAL DESIGN · UI/UX · VISUAL DESIGN ·
-                </textPath>
-              </text>
-            </svg>
-            <span aria-hidden="true">↓</span>
-          </span>
+                <defs>
+                  <path
+                    id="badgeCircle"
+                    d="M60 60m-40 0a40 40 0 1 1 80 0a40 40 0 1 1-80 0"
+                  />
+                </defs>
+                <text fontSize="11" letterSpacing="3" fill="currentColor">
+                  <textPath href="#badgeCircle">
+                    UI/UX · VISUAL DESIGN · UI/UX · VISUAL DESIGN ·
+                  </textPath>
+                </text>
+              </svg>
+              <span aria-hidden="true">↓</span>
+            </span>
+          </div>
         </div>
       </section>
 
@@ -1272,9 +1272,30 @@ export default function Page() {
           <a
             href="https://instagram.com/_sepantaalizadeh"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
           >
             Instagram · @_sepantaalizadeh ↗
+          </a>
+          <a
+            href="https://dribbble.com/Sepanta_Alizadeh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Dribbble ↗
+          </a>
+          <a
+            href="https://www.behance.net/sepantaalizadeh"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Behance ↗
+          </a>
+          <a
+            href="https://www.linkedin.com/in/sepantaalizadeh/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LinkedIn ↗
           </a>
         </div>
         <a className={styles.contactLink} href="https://wa.me/989130772988">
