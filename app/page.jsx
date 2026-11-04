@@ -697,10 +697,18 @@ export default function Page() {
       );
       progress?.style.setProperty("--page-progress", String(y / maxScroll));
       let currentNav = null;
+      let closestDistance = Infinity;
       navLinks.forEach((link) => {
         const section = root.querySelector(link.getAttribute("href"));
-        if (section && section.getBoundingClientRect().top <= viewport * 0.4)
-          currentNav = link;
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          const distance = Math.abs(rect.top);
+          // Only consider sections that are within the viewport or slightly above
+          if (rect.top <= viewport * 0.5 && distance < closestDistance) {
+            closestDistance = distance;
+            currentNav = link;
+          }
+        }
       });
       if (currentNav !== activeNav) {
         activeNav = currentNav;
