@@ -78,6 +78,17 @@ const projects = [
     description:
       "A dark, high-impact website for an Afghan metal band, bringing its visual identity, concert listings, biography, videos, and ticket information together.",
   },
+  {
+    title: "Aram",
+    category: "10 / Healthcare & web design",
+    image: "/Images/aram-catalog-preview.png",
+    alt: "Aram Persian-language online counseling and appointment booking website",
+    secondaryImage: "/Images/aram-catalog-en-preview.jpg",
+    secondaryAlt: "Aram English-language online counseling and appointment booking website",
+    link: "https://aramdemo.netlify.app/",
+    description:
+      "A bilingual online-counseling platform that brings therapist discovery, appointment booking, and client tools together.",
+  },
 ];
 
 const featuredVideo = "/videos/portfolio-motion-study.m4v";
@@ -1067,18 +1078,51 @@ export default function Page() {
               className={`${styles.caseProject} ${index % 2 ? styles.caseFlip : ""}`}
               key={`case-${project.title}`}
             >
-              <div className={styles.projectVisual}>
-                <Image
-                  src={project.image}
-                  alt={project.alt}
-                  fill
-                  sizes="(max-width: 800px) 92vw, 50vw"
-                />
+              <div
+                className={`${styles.projectVisual} ${project.secondaryImage ? styles.projectVisualPair : ""}`}
+              >
+                {project.secondaryImage ? (
+                  <>
+                    <div>
+                      <Image
+                        src={project.image}
+                        alt={project.alt}
+                        fill
+                        sizes="(max-width: 800px) 46vw, 25vw"
+                      />
+                    </div>
+                    <div>
+                      <Image
+                        src={project.secondaryImage}
+                        alt={project.secondaryAlt}
+                        fill
+                        sizes="(max-width: 800px) 46vw, 25vw"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <Image
+                    src={project.image}
+                    alt={project.alt}
+                    fill
+                    sizes="(max-width: 800px) 92vw, 50vw"
+                  />
+                )}
               </div>
               <div className={styles.caseCopy}>
                 <p className={styles.eyebrow}>{project.category}</p>
                 <h3>{project.title}</h3>
                 <p>{project.description}</p>
+                {project.link && (
+                  <a
+                    className={styles.contactLink}
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit live website <span aria-hidden="true">↗</span>
+                  </a>
+                )}
               </div>
             </article>
           ))}
